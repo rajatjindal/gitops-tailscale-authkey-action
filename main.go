@@ -3,12 +3,21 @@ package main
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"os"
 	"strings"
 
+	"github.com/spinframework/spin-go-sdk/v2/wit"
+	"github.com/ydnar/wasi-http-go/wasihttp"
+	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/clientcredentials"
 	"tailscale.com/client/tailscale/v2"
 )
+
+// This is purely for wit interfaces
+// https://github.com/ydnar/wasi-http-go/issues/22 tracks how
+// to do this in a better way.
+var _ = wit.Wit
 
 func main() {
 	ctx := context.Background()
@@ -36,6 +45,13 @@ outputFile: %s
 		ClientSecret: oauthSecret,
 		TokenURL:     "https://api.tailscale.com/api/v2/oauth/token",
 	}
+
+	wasiclient := &http.Client{
+		Transport: &wasihttp.Transport{},
+	}
+
+	// inject wasihttp client
+	ctx = context.WithValue(ctx, oauth2.HTTPClient, wasiclient)
 	client := oauthConfig.Client(ctx)
 
 	tclient := tailscale.Client{
