@@ -11,10 +11,16 @@ inputs:
     description: "Tailscale OAuth Secret"
     required: true
   tags:
-    description: "Comma separated tags to use"
+    description: "Comma separated tags to use. Must be in format 'tag:some-tag'"
     required: true
+  reusable:
+    description: "Make generated authkey reusable. Defaults to false"
+    required: false
+  preauthorized:
+    description: "Make generated authkey preauthorized. Defaults to false"
+    required: false
   authkey-output-file:
-    description: "If provided, stores the generated authkey in this file."
+    description: "Save generated authkey in this file. Defaults to: tailscale-authkey.txt"
     required: false
 runs:
   using: "composite"
@@ -51,6 +57,8 @@ runs:
         TS_OAUTH_ID: "${{ inputs.oauth-client-id }}"
         TS_OAUTH_SECRET: "${{ inputs.oauth-secret }}"
         TS_TAILNET: "${{ inputs.tailnet }}"
-        TS_TAGS: "${{ input.tags }}"
+        TS_AUTHKEY_TAGS: "${{ input.tags }}"
+        TS_AUTHKEY_PREAUTHORIZED: "${{ inputs.preauthorized }}"
+        TS_AUTHKEY_REUSABLE: "${{ inputs.reusable }}"
         TS_AUTHKEY_FILE: "${{ inputs.authkey-file }}"
       run: go run github.com/rajatjindal/gitops-tailscale-authkey-action@main

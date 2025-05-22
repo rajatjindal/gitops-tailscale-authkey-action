@@ -16,8 +16,20 @@ func main() {
 	oauthId := os.Getenv("TS_OAUTH_ID")
 	oauthSecret := os.Getenv("TS_OAUTH_SECRET")
 	tailnet := os.Getenv("TS_TAILNET")
-	tags := strings.Split(os.Getenv("TS_TAGS"), ",")
+	tags := strings.Split(os.Getenv("TS_AUTHKEY_TAGS"), ",")
+	reusable := os.Getenv("TS_AUTHKEY_REUSABLE") == "true"
+	preauthorized := os.Getenv("TS_AUTHKEY_PREAUTHORIZED") == "true"
 	outputFile := os.Getenv("TS_AUTHKEY_FILE")
+	if outputFile == "" {
+		outputFile = "tailscale-authkey.txt"
+	}
+
+	fmt.Printf(`generating authkey with input params:
+tags: %s
+reusable: %t
+preauthorized: %t
+outputFile: %s
+\n`, tags, reusable, preauthorized, outputFile)
 
 	oauthConfig := &clientcredentials.Config{
 		ClientID:     oauthId,
@@ -37,7 +49,9 @@ func main() {
 		Tags          []string `json:"tags"`
 		Preauthorized bool     `json:"preauthorized"`
 	}{
-		Tags: tags,
+		Reusable:      reusable,
+		Preauthorized: preauthorized,
+		Tags:          tags,
 	}
 
 	devices := struct {
@@ -57,15 +71,13 @@ func main() {
 		},
 	})
 	if err != nil {
-		panic(err)
+		fmt.Printf("failed to create authkey. Error: %v\n", err)
+		os.Exit(1)
 	}
 
-	if outputFile != "" {
-		err := os.WriteFile(outputFile, []byte(authkey.Key), 0600)
-		if err != nil {
-			panic(err)
-		}
+	err = os.WriteFile(outputFile, []byte(authkey.Key), 0600)
+	if err != nil {
+		fmt.Printf("failed to save authkey file. Error: %v\n", err)
+		os.Exit(1)
 	}
-
-	fmt.Println("authkey is ", authkey.Key)
 }
