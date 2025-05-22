@@ -6,7 +6,7 @@ description = "Generate Tailscale authkey"
 name = "gitops-tailscale-authkey"
 version = "0.1.0"
 
-[[trigger.command]]
+[[trigger.ghaction]]
 component = "generate-authkey"
 
 [component.generate-authkey]
