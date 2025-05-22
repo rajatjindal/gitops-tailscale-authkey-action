@@ -1,0 +1,56 @@
+name: "Sync Tailscale ACLs"
+description: "Generate Tailscale authkey using oauth credentials"
+inputs:
+  tailnet:
+    description: "Tailnet name (eg. example.com, xe.github, tailscale.org.github)"
+    required: true
+  oauth-client-id:
+    description: "Tailscale OAuth ID"
+    required: true
+  oauth-secret:
+    description: "Tailscale OAuth Secret"
+    required: true
+  tags:
+    description: "Comma separated tags to use"
+    required: true
+  authkey-output-file:
+    description: "If provided, stores the generated authkey in this file."
+    required: false
+runs:
+  using: "composite"
+  steps:
+    - name: Check Auth Info Empty
+      if: ${{ inputs['oauth-secret'] == '' || inputs['oauth-client-id'] == '' }}
+      shell: bash
+      run: |
+        echo "::error title=⛔ error hint::API OAuth client-id and secret must be specified. Maybe you need to populate it in the Secrets for your workflow, see more in https://docs.github.com/en/actions/security-guides/encrypted-secrets and https://tailscale.com/s/oauth-clients"
+        exit 1
+
+    - name: Check Tags Empty
+      if: ${{ inputs['tags'] == '' }}
+      shell: bash
+      run: |
+        echo "::error title=⛔ error hint::API Tags must be specified."
+        exit 1
+
+    - name: Check Tailnet Empty
+      if: ${{ inputs['tailnet'] == '' }}
+      shell: bash
+      run: |
+        echo "::error title=⛔ error hint::API Tailnet must be specified."
+        exit 1
+
+    - uses: actions/setup-go@v5
+      with:
+        go-version: 1.24.3
+        cache: false
+
+    - name: Authkey generator
+      shell: bash
+      env:
+        TS_OAUTH_ID: "${{ inputs.oauth-client-id }}"
+        TS_OAUTH_SECRET: "${{ inputs.oauth-secret }}"
+        TS_TAILNET: "${{ inputs.tailnet }}"
+        TS_TAGS: "${{ input.tags }}"
+        TS_AUTHKEY_FILE: "${{ inputs.authkey-file }}"
+      run: go run github.com/rajatjindal/gitops-tailscale-authkey-action@main
