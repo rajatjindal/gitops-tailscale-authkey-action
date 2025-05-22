@@ -1,4 +1,4 @@
-name: "Sync Tailscale ACLs"
+name: "Generate Tailscale AuthKey"
 description: "Generate Tailscale authkey using oauth credentials"
 inputs:
   tailnet:
